@@ -57,7 +57,9 @@ Desktop.ini
 # Linux auto files
 *~
 
+/runtime/component/qybcoin/lib
 /runtime/component/qybcoin/build
 /runtime/sessions
 /runtime/txlog
 /runtime/log
+/runtime/db/h2/
