@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<services xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/service-definition-2.0.xsd">
+
+    <service verb="create" noun="Order" displayName="生成红包订单">
+        <in-parameters>
+            <parameter name="amount" type="BigDecimal">
+                <description>红包金额</description>
+            </parameter>
+            <parameter name="quantity" type="Integer">
+                <description>红包数量</description>
+            </parameter>
+            <parameter name="allotTypeEnumId" type="String">
+                <description>分配方式</description>
+            </parameter>
+            <parameter name="comment" type="String">
+                <description>祝福语</description>
+            </parameter>
+        </in-parameters>
+        <out-parameters>
+            <parameter name="payAddress"><description>qyb收款地址</description></parameter>
+            <parameter name="orderId"><description>订单ID</description></parameter>
+        </out-parameters>
+        <actions>
+            <set field="userId" from="ec.user.userId"/>
+            <set field="statusId" value="OrderCreated"/>
+            <set field="fromDate" from="ec.user.nowTimestamp"/>
+            <service-call name="create#io.qyb.RedPacketOrder" in-map="context" out-map="context"/>
+            <set field="payAddress" from="ec.getTool('QybClient',null).getAddress('redPacket')"/>
+        </actions>
+    </service>
+
+    <service verb="pay" noun="Order" displayName="订单支付">
+        <in-parameters>
+            <parameter name="orderId" type="String"><description>订单ID</description></parameter>
+            <parameter name="txId" type="String"><description>交易ID</description></parameter>
+        </in-parameters>
+        <actions>
+            <entity-find-one entity-name="io.qyb.RedPacketOrder" value-field="order" for-update="true"/>
+            <if condition="order?.statusId == 'OrderCreated'">
+                <then>
+                    <set field="order.statusId" value="OrderPlaced"/>
+                    <set field="order.txId" from="txId"/>
+                    <entity-update value-field="order"/>
+                </then>
+                <else>
+                    <message error="true">paid</message>
+                </else>
+            </if>
+            <check-errors/>
+        </actions>
+    </service>
+
+    <service verb="get" noun="MyOrder" displayName="我的红包订单">
+        <out-parameters>
+            <parameter name="orders"><description>订单</description></parameter>
+        </out-parameters>
+        <actions>
+            <entity-find entity-name="io.qyb.RedPacketOrder" list="orders">
+                <econdition field-name="userId" from="ec.user.userId"/>
+            </entity-find>
+        </actions>
+    </service>
+
+    <service verb="get" noun="RedPacket">
+        <in-parameters><parameter name="orderId"></parameter></in-parameters>
+    </service>
+</services>

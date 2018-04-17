@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+This software is in the public domain under CC0 1.0 Universal plus a
+Grant of Patent License.
+
+To the extent possible under law, the author(s) have dedicated all
+copyright and related and neighboring rights to this software to the
+public domain worldwide. This software is distributed without any
+warranty.
+
+You should have received a copy of the CC0 Public Domain Dedication
+along with this software (see the LICENSE.md file). If not, see
+<http://creativecommons.org/publicdomain/zero/1.0/>.
+-->
+<entities xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/entity-definition-2.1.xsd">
+
+    <entity entity-name="RedPacketOrder" package="io.qyb" use="transactional" cache="never">
+        <field name="orderId" type="id" is-pk="true" />
+        <field name="amount" type="number-decimal"/>
+        <field name="quantity" type="number-decimal" enable-audit-log="true"/>
+        <field name="allotTypeEnumId" type="id"/>
+        <field name="userId" type="id"/>
+        <field name="fromDate" type="date-time"/>
+        <field name="thruDate" type="date-time"/>
+        <field name="comment" type="text-medium"/>
+        <field name="statusId" type="id"/>
+        <field name="txId" type="text-long"/>
+
+        <relationship type="one" related="moqui.security.UserAccount" short-alias="user"/>
+        <relationship type="one" title="PacketAllotType" related="moqui.basic.Enumeration" short-alias="packetAllotTypeEnum">
+            <key-map field-name="allotTypeEnumId"/></relationship>
+        <seed-data>
+            <moqui.basic.EnumerationType description="红包类型" enumTypeId="PacketAllotType"/>
+            <moqui.basic.Enumeration description="固定分配" enumId="FIXED" enumTypeId="PacketAllotType"/>
+            <moqui.basic.Enumeration description="随机分配" enumId="RANDOM" enumTypeId="PacketAllotType"/>
+
+            <moqui.basic.StatusType description="红包订单状态" statusTypeId="RedPacketOrderStatus"/>
+            <moqui.basic.StatusItem description="已创建" sequenceNum="0" statusId="OrderCreated" statusTypeId="RedPacketOrderStatus"/>
+            <moqui.basic.StatusItem description="已支付" sequenceNum="1" statusId="OrderPlaced" statusTypeId="RedPacketOrderStatus"/>
+            <moqui.basic.StatusItem description="已过期" sequenceNum="3" statusId="OrderExpired" statusTypeId="RedPacketOrderStatus"/>
+            <moqui.basic.StatusItem description="已完成" sequenceNum="4" statusId="OrderCompleted" statusTypeId="RedPacketOrderStatus"/>
+            <moqui.basic.StatusItem description="已取消" sequenceNum="5" statusId="OrderCancelled" statusTypeId="RedPacketOrderStatus"/>
+
+            <moqui.basic.StatusFlowTransition statusFlowId="Default" statusId="OrderCreated" toStatusId="OrderPlaced" transitionName="Paid"/>
+
+            <moqui.basic.StatusFlowTransition statusFlowId="Default" statusId="OrderPlaced" toStatusId="OrderExpired" transitionName="Expired"/>
+            <moqui.basic.StatusFlowTransition statusFlowId="Default" statusId="OrderPlaced" toStatusId="OrderCompleted" transitionName="Completed"/>
+
+            <moqui.basic.StatusFlowTransition statusFlowId="Default" statusId="OrderCreated" toStatusId="OrderCancelled" transitionName="Canceled"/>
+
+            <moqui.basic.StatusFlowTransition statusFlowId="Default" statusId="OrderExpired" toStatusId="OrderCompleted" transitionName="Return and Completed"/>
+        </seed-data>
+    </entity>
+</entities>

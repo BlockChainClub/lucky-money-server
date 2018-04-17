@@ -1,0 +1,18 @@
+language: groovy
+
+jdk:
+  - oraclejdk8
+
+install: true
+
+env:
+  - TERM=dumb
+
+script:
+  - ./gradlew load
+  - ./gradlew test --info
+
+cache:
+  directories:
+    - $HOME/.gradle/caches
+    - $HOME/.gradle/wrapper
