@@ -15,12 +15,14 @@ along with this software (see the LICENSE.md file). If not, see
 <entities xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
           xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/entity-definition-2.1.xsd">
 
-    <entity entity-name="RedPacketOrder" package="io.qyb" use="transactional" cache="never">
+    <entity entity-name="RedPacketOrder" package="io.qyb" use="transactional">
         <field name="orderId" type="id" is-pk="true" />
         <field name="amount" type="number-decimal"/>
         <field name="quantity" type="number-decimal" enable-audit-log="true"/>
         <field name="allotTypeEnumId" type="id"/>
         <field name="userId" type="id"/>
+        <field name="username" type="text-medium"/>
+        <field name="entryDate" type="date-time"/>
         <field name="fromDate" type="date-time"/>
         <field name="thruDate" type="date-time"/>
         <field name="comment" type="text-medium"/>
@@ -51,5 +53,16 @@ along with this software (see the LICENSE.md file). If not, see
 
             <moqui.basic.StatusFlowTransition statusFlowId="Default" statusId="OrderExpired" toStatusId="OrderCompleted" transitionName="Return and Completed"/>
         </seed-data>
+    </entity>
+
+    <entity entity-name="RedPacket" package="io.qyb" cache="never">
+        <field name="orderId" type="id" is-pk="true"/>
+        <field name="userId" type="id" is-pk="true"/>
+        <field name="username" type="text-medium"/>
+        <field name="amount" type="number-decimal"/>
+        <field name="entryDate" type="date-time" default="ec.user.nowTimestamp"/>
+        <index name="PEDP_IDX">
+            <index-field name="orderId"/>
+        </index>
     </entity>
 </entities>

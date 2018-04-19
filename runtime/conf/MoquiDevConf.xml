@@ -18,8 +18,18 @@
     <default-property name="qyb_rpc_host" value="103.229.144.147"/>
     <default-property name="qyb_rpc_port" value="9888"/>
 
+    <default-property name="redis_host" value="127.0.0.1"/>
+    <default-property name="redis_port" value="6379"/>
+    <default-property name="redis_password" value=""/>
+
+    <default-property name="redis_max_total" value="5000"/>
+    <default-property name="redis_max_idle" value="3000"/>
+    <default-property name="redis_max_wait_millis" value="500"/>
+    <default-property name="redis_time_out" value="500"/>
+
     <tools empty-db-load="all">
         <tool-factory class="io.qyb.QybClientToolFactory" init-priority="20" disabled="false" />
+        <tool-factory class="io.qyb.RedPacketToolFactory" init-priority="21" disabled="false" />
     </tools>
 
     <cache-list warm-on-start="false">

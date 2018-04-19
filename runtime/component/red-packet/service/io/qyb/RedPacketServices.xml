@@ -24,8 +24,9 @@
         </out-parameters>
         <actions>
             <set field="userId" from="ec.user.userId"/>
+            <set field="username" from="ec.user.username"/>
             <set field="statusId" value="OrderCreated"/>
-            <set field="fromDate" from="ec.user.nowTimestamp"/>
+            <set field="entryDate" from="ec.user.nowTimestamp"/>
             <service-call name="create#io.qyb.RedPacketOrder" in-map="context" out-map="context"/>
             <set field="payAddress" from="ec.getTool('QybClient',null).getAddress('redPacket')"/>
         </actions>
@@ -36,13 +37,18 @@
             <parameter name="orderId" type="String"><description>订单ID</description></parameter>
             <parameter name="txId" type="String"><description>交易ID</description></parameter>
         </in-parameters>
+        <out-parameters>
+            <parameter name="result"/>
+        </out-parameters>
         <actions>
             <entity-find-one entity-name="io.qyb.RedPacketOrder" value-field="order" for-update="true"/>
             <if condition="order?.statusId == 'OrderCreated'">
                 <then>
                     <set field="order.statusId" value="OrderPlaced"/>
                     <set field="order.txId" from="txId"/>
+                    <set field="fromDate" from="ec.user.nowTimestamp"/>
                     <entity-update value-field="order"/>
+                    <set field="result" from="ec.getTool('RedPacket',null).build(orderId, order.allotTypeEnumId, order.amount, order.quantity.intValue())"/>
                 </then>
                 <else>
                     <message error="true">paid</message>
@@ -63,7 +69,68 @@
         </actions>
     </service>
 
-    <service verb="get" noun="RedPacket">
-        <in-parameters><parameter name="orderId"></parameter></in-parameters>
+    <service verb="get" noun="RedPacket" displayName="领取红包">
+        <in-parameters><parameter name="orderId"/></in-parameters>
+        <out-parameters>
+            <parameter name="amount"/>
+            <parameter name="status"/>
+        </out-parameters>
+        <actions>
+            <set field="result" from="ec.getTool('RedPacket',null).getRedPacket(ec.user.userId, orderId)"/>
+            <set field="status" from="result"/>
+            <if condition="result==-3">
+                <!-- 检查是否不存在 还是已过期 -->
+                <then>
+                    <set field="status" from="result"/>
+                </then>
+                <else-if condition="result==-1">
+                    <!-- 已领过 -->
+                </else-if>
+                <else-if condition="result==-2">
+                    <!-- 已领完 -->
+                </else-if>
+                <else-if condition="result==-4">
+                    <!-- 重试-->
+                </else-if>
+                <else>
+                    <set field="status" value="0"/>
+                    <set field="amount" from="result"/>
+                    <!-- 已领到 , 写入数据库-->
+                    <service-call name="create#io.qyb.RedPacket" in-map="[orderId:orderId, userId:ec.user.userId, username:ec.user.username, amount:amount, entryDate:ec.user.nowTimestamp]"/>
+                </else>
+            </if>
+        </actions>
     </service>
+
+    <service verb="view" noun="RedPacket" displayName="查看红包">
+        <in-parameters><parameter name="orderId"/></in-parameters>
+        <out-parameters>
+            <parameter name="amount"/>
+            <parameter name="quantity"/>
+            <parameter name="comment"/>
+            <parameter name="username"/>
+            <parameter name="fromDate"/>
+            <parameter name="thruDate"/>
+            <parameter name="packets"/>
+        </out-parameters>
+        <actions>
+            <entity-find-one entity-name="io.qyb.RedPacketOrder" value-field="redPacketOrder"/>
+            <entity-find entity-name="io.qyb.RedPacketOrder" list="redPacketOrders">
+                <econdition field-name="orderId" from="orderId"/>
+                <econdition field-name="statusId" operator="in" value="OrderPlaced,OrderExpired,OrderCompleted"/>
+            </entity-find>
+            <if condition="redPacketOrders?.size() &gt;0">
+                <set field="amount" from="redPacketOrders.first().amount"/>
+                <set field="quantity" from="redPacketOrders.first().quantity"/>
+                <set field="comment" from="redPacketOrders.first().comment"/>
+                <set field="username" from="ec.user.username"/>
+                <set field="fromDate" from="redPacketOrders.first().fromDate"/>
+                <set field="thruDate" from="redPacketOrders.first().thruDate"/>
+                <entity-find entity-name="io.qyb.RedPacket" list="packets">
+                    <econdition field-name="orderId" from="orderId"/>
+                </entity-find>
+            </if>
+        </actions>
+    </service>
+
 </services>

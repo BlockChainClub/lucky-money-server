@@ -30,6 +30,12 @@ along with this software (see the LICENSE.md file). If not, see
             <resource name="pay">
                 <method type="post"><service name="io.qyb.RedPacketServices.pay#Order"/></method>
             </resource>
+            <resource name="lucky">
+                <method type="get"><service name="io.qyb.RedPacketServices.get#RedPacket"/></method>
+            </resource>
+            <resource name="packet">
+                <method type="get"><service name="io.qyb.RedPacketServices.view#RedPacket"/></method>
+            </resource>
         </id>
     </resource>
 </resource>

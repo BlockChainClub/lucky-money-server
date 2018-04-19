@@ -63,3 +63,6 @@ Desktop.ini
 /runtime/txlog
 /runtime/log
 /runtime/db/h2/
+
+/runtime/component/red-packet/lib
+/runtime/component/red-packet/build

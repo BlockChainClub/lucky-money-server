@@ -1,0 +1,36 @@
+apply plugin: 'groovy'
+
+sourceCompatibility = '1.8'
+def moquiDir = file(projectDir.absolutePath + '/../../..')
+def frameworkDir = file(moquiDir.absolutePath + '/framework')
+def componentNode = parseComponent(project)
+version = componentNode.'@version'
+
+// maybe in the future: repositories { mavenCentral() }
+repositories {
+    flatDir name: 'localLib', dirs: frameworkDir.absolutePath + '/lib'
+    jcenter()
+}
+
+dependencies {
+    compile project(':framework')
+    compile group: 'redis.clients', name: 'jedis', version: '2.9.0'
+    testCompile project(':framework').configurations.testCompile.allDependencies
+}
+
+// by default the Java plugin runs test on build, change to not do that (only run test if explicit task)
+check.dependsOn.remove(test)
+task cleanLib(type: Delete) { delete fileTree(dir: projectDir.absolutePath+'/lib', include: '*') }
+clean.dependsOn cleanLib
+
+jar {
+    destinationDir = file(projectDir.absolutePath + '/lib')
+    baseName = componentNode.'@name'
+}
+task copyDependencies { doLast {
+    copy {
+        from (configurations.runtime - project(':framework').configurations.runtime - project(':framework').jar.archivePath)
+        into file(projectDir.absolutePath + '/lib') }
+} }
+copyDependencies.dependsOn cleanLib
+jar.dependsOn copyDependencies
