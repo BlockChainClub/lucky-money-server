@@ -44,8 +44,11 @@ along with this software (see the LICENSE.md file). If not, see
     <transition name="api_key"><actions><script>ec.web.sendTextResponse(ec.user.getLoginKey())</script></actions>
         <default-response type="none"/></transition>
 
+    <transition name="user"><actions><script>ec.web.sendJsonResponse([userId:ec.user.userId, apiKey:ec.user.getLoginKey()])</script></actions>
+        <default-response type="none"/></transition>
+
     <!--
-    EXAMPLES
+    EXAMPLESam9obi5kb2U6bW9xdWk=
 
     Verbs: GET=find, POST=create, PUT=store (create or update), PATCH=update, DELETE=delete
 

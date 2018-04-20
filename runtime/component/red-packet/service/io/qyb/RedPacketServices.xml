@@ -76,21 +76,32 @@
             <parameter name="status"/>
         </out-parameters>
         <actions>
+            <entity-find entity-name="io.qyb.RedPacketOrder" list="redPacketOrder">
+                <date-filter/>
+                <econdition field-name="orderId" from="orderId" />
+            </entity-find>
+            <if condition="redPacketOrder==null || redPacketOrder?.orderId==null">
+                <set field="status" value="1"/>
+                <return/>
+            </if>
             <set field="result" from="ec.getTool('RedPacket',null).getRedPacket(ec.user.userId, orderId)"/>
             <set field="status" from="result"/>
             <if condition="result==-3">
-                <!-- 检查是否不存在 还是已过期 -->
+                <!-- 已过期 -->
                 <then>
-                    <set field="status" from="result"/>
+                    <set field="status" value="1"/>
                 </then>
                 <else-if condition="result==-1">
                     <!-- 已领过 -->
+                    <set field="status" value="2"/>
                 </else-if>
                 <else-if condition="result==-2">
                     <!-- 已领完 -->
+                    <set field="status" value="3"/>
                 </else-if>
                 <else-if condition="result==-4">
                     <!-- 重试-->
+                    <set field="status" value="4"/>
                 </else-if>
                 <else>
                     <set field="status" value="0"/>
@@ -112,8 +123,10 @@
             <parameter name="fromDate"/>
             <parameter name="thruDate"/>
             <parameter name="packets"/>
+            <parameter name="myCount"/>
         </out-parameters>
         <actions>
+            <set field="myCount" value="0"/>
             <entity-find-one entity-name="io.qyb.RedPacketOrder" value-field="redPacketOrder"/>
             <entity-find entity-name="io.qyb.RedPacketOrder" list="redPacketOrders">
                 <econdition field-name="orderId" from="orderId"/>
@@ -123,12 +136,16 @@
                 <set field="amount" from="redPacketOrders.first().amount"/>
                 <set field="quantity" from="redPacketOrders.first().quantity"/>
                 <set field="comment" from="redPacketOrders.first().comment"/>
-                <set field="username" from="ec.user.username"/>
+                <set field="username" from="redPacketOrders.first().username"/>
                 <set field="fromDate" from="redPacketOrders.first().fromDate"/>
                 <set field="thruDate" from="redPacketOrders.first().thruDate"/>
                 <entity-find entity-name="io.qyb.RedPacket" list="packets">
                     <econdition field-name="orderId" from="orderId"/>
                 </entity-find>
+                <entity-find-count entity-name="io.qyb.RedPacket" count-field="myCount">
+                    <econdition field-name="orderId" from="orderId"/>
+                    <econdition field-name="userId" from="ec.user.userId"/>
+                </entity-find-count>
             </if>
         </actions>
     </service>
